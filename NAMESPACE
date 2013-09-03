@@ -1,0 +1,7 @@
+exportPattern("^Cairo")
+export(SensePNG)
+# export(SenseSVG)
+export(SetSenseCacheDir)
+export(SenseDevices)
+export(SenseDeviceChanges)
+export(SensePNGToBase64)
