@@ -61,7 +61,7 @@ SenseDeviceChanges <- function() {
   changes
 }
 # The default Sense graphics device. The filename is generated automatically.
-SensePNG <- function(width = 640, height = 480, pointsize = 12, bg = "white",  res = NA, ...) {
+SensePNG <- function(width = 1280, height = 960, pointsize = 12, bg = "white",  res = 160, ...) {
   # Note, for some reason storing Cairo devices in lists or vectors
   # causes them to be represented as integers, meaning we can't ask 
   # for their serial numbers in the future. So we have to use the
@@ -77,23 +77,6 @@ library('caTools')
 SensePNGToBase64 <- function(d) {
   capture.output(r <- png::writePNG(Cairo.capture(d), raw()))
   caTools::base64encode(r)
-}
-
-# An optional SVG graphics device for Sense.
-# FIXWE: Currently, SVG devices only write on dev.off().
-# FIXME: Same with PS and PDF devices. Also, this is the
-# FIXME: same with R's builtin PDF and PS devices. dev.off()
-# FIXME: has no effect.
-SenseSVG <- function(width = 8, height = 6, pointsize = 12, bg = "transparent",  ...) {
-  # Note, for some reason storing Cairo devices in lists or vectors
-  # causes them to be represented as integers, meaning we can't ask 
-  # for their serial numbers in the future. So we have to use the
-  # namespace itself as a mutable storage location.  
-  filename <- tempfile(pattern="SensePlot", tmpdir=SenseCacheDir, fileext=".svg")
-  devSym <- basename(filename)
-	newDev <- CairoSVG(file=filename, width=width, height=height, pointsize=pointsize, bg=bg, ...)
-	assign(devSym, newDev, SenseDevices)
-	invisible(newDev)
 }
 
 Cairo.capabilities <- function() {
