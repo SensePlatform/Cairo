@@ -61,13 +61,13 @@ SenseDeviceChanges <- function() {
   changes
 }
 # The default Sense graphics device. The filename is generated automatically.
-SensePNG <- function(width = 8, height = 6, pointsize = 24, bg = "white",  dpi=160, ...) {
+SensePNG <- function(width = 8, height = 6, pointsize = 24, units="in", bg = "white",  dpi=160, ...) {
   # Note, for some reason storing Cairo devices in lists or vectors
   # causes them to be represented as integers, meaning we can't ask 
   # for their serial numbers in the future. So we have to use the
   # namespace itself as a mutable storage location.
   devSym <- basename(tempfile(pattern="SensePlot", tmpdir=""))
-	newDev <- Cairo(width=width, height=height, pointsize=pointsize, bg=bg, res=res, type="raster", ...)
+	newDev <- Cairo(width=width, height=height, pointsize=pointsize, bg=bg, units=units, dpi=dpi, type="raster", ...)
   assign(devSym, newDev, SenseDevices)
 	invisible(newDev)
 }
