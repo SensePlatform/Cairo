@@ -61,7 +61,7 @@ SenseDeviceChanges <- function() {
   changes
 }
 # The default Sense graphics device. The filename is generated automatically.
-SensePNG <- function(width = 1280, height = 960, pointsize = 12, bg = "white",  res = 160, ...) {
+SensePNG <- function(width = 8, height = 6, pointsize = 24, bg = "white",  dpi=160, ...) {
   # Note, for some reason storing Cairo devices in lists or vectors
   # causes them to be represented as integers, meaning we can't ask 
   # for their serial numbers in the future. So we have to use the
