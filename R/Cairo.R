@@ -36,7 +36,7 @@ Cairo <- function(width=640, height=480, file="", type="png", pointsize=12, bg="
 SenseCacheDir <- "."
 
 # The default Sense graphics device. The filename is generated automatically.
-SensePNG <- function(width = 1280, height = 960, pointsize = 24, units="px", bg = "white",  dpi=160, ...) {
+SensePNG <- function(width = 8, height = 6, pointsize = 12, units="in", bg = "white",  dpi=160, ...) {
   # Note, for some reason storing Cairo devices in lists or vectors
   # causes them to be represented as integers, meaning we can't ask 
   # for their serial numbers in the future. So we have to use the
@@ -58,7 +58,7 @@ SensePNGToBase64 <- function(d) {
 }
 
 SenseDeviceData <- function(device) {
-  list(width=attr(device,"width"),height=attr(device,"height"),units=attr(device,"units"),dpi=attr(device,"dpi"),data=SensePNGToBase64(device))
+  list(width=attr(device,"width")*2,height=attr(device,"height")*2,units="in",dpi=attr(device,"dpi"),data=SensePNGToBase64(device))
 }
 
 CacheSenseDevice <- function(device) {
