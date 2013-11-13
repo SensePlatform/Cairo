@@ -34,6 +34,39 @@ Cairo <- function(width=640, height=480, file="", type="png", pointsize=12, bg="
 
 
 SenseCacheDir <- "."
+
+# The default Sense graphics device. The filename is generated automatically.
+SensePNG <- function(width = 1280, height = 960, pointsize = 24, units="px", bg = "white",  dpi=160, ...) {
+  # Note, for some reason storing Cairo devices in lists or vectors
+  # causes them to be represented as integers, meaning we can't ask 
+  # for their serial numbers in the future. So we have to use the
+  # namespace itself as a mutable storage location.
+  devSym <- basename(tempfile(pattern="SensePlot", tmpdir=""))
+	newDev <- Cairo(width=width, height=height, pointsize=pointsize, bg=bg, units=units, dpi=dpi, type="raster", ...)
+  attr(newDev, "units") <- units
+  attr(newDev, "dpi") <- dpi
+  attr(newDev, "sym") <- devSym
+  assign(devSym, newDev, SenseDevices)
+	invisible(newDev)
+}
+
+library("png")
+library("caTools")
+SensePNGToBase64 <- function(d) {
+  capture.output(r <- png::writePNG(Cairo.capture(d), raw()))
+  caTools::base64encode(r)
+}
+
+SenseDeviceData <- function(device) {
+  list(width=attr(device,"width"),height=attr(device,"height"),units=attr(device,"units"),dpi=attr(device,"dpi"),data=SensePNGToBase64(device))
+}
+
+CacheSenseDevice <- function(device) {
+  statuses <- get("statuses", Cairo::SenseDevices)
+  statuses[[attr(device, "sym")]] <- Cairo.serial(device)
+  assign('statuses', statuses, Cairo::SenseDevices)
+}
+
 # An exported function that lets us inject Sense's cache directory, so
 # that we can store automatically generated image files there.
 SetSenseCacheDir <- function(NewDir) {SenseCacheDir <<- NewDir}
@@ -50,7 +83,7 @@ SenseDeviceChanges <- function() {
       if (newStatuses[[dev]] > 0) {
         output <- function() {
           device <- get(dev, Cairo::SenseDevices)
-          list(width=attr(device,"width"),height=attr(device,"height"),units=attr(device,"units"),dpi=attr(device,"dpi"),data=SensePNGToBase64(device))
+          SenseDeviceData(dev)
         }
         if (is.null(curStatuses[[dev]])) changes[[dev]] <- output()
         else if (curStatuses[[dev]] != newStatuses[[dev]]) changes[[dev]] <- output()
@@ -60,26 +93,8 @@ SenseDeviceChanges <- function() {
   assign('statuses', newStatuses, Cairo::SenseDevices)
   changes
 }
-# The default Sense graphics device. The filename is generated automatically.
-SensePNG <- function(width = 1280, height = 960, pointsize = 24, units="px", bg = "white",  dpi=160, ...) {
-  # Note, for some reason storing Cairo devices in lists or vectors
-  # causes them to be represented as integers, meaning we can't ask 
-  # for their serial numbers in the future. So we have to use the
-  # namespace itself as a mutable storage location.
-  devSym <- basename(tempfile(pattern="SensePlot", tmpdir=""))
-	newDev <- Cairo(width=width, height=height, pointsize=pointsize, bg=bg, units=units, dpi=dpi, type="raster", ...)
-  attr(newDev, "units") <- units
-  attr(newDev, "dpi") <- dpi
-  assign(devSym, newDev, SenseDevices)
-	invisible(newDev)
-}
 
-library('png')
-library('caTools')
-SensePNGToBase64 <- function(d) {
-  capture.output(r <- png::writePNG(Cairo.capture(d), raw()))
-  caTools::base64encode(r)
-}
+
 
 Cairo.capabilities <- function() {
     ust <- unique(.supported.types)
