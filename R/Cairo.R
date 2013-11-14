@@ -42,7 +42,7 @@ SensePNG <- function(width = 8, height = 6, pointsize = 24, units="in", bg = "wh
   # namespace itself as a mutable storage location.
   devSym <- basename(tempfile(pattern="SensePlot", tmpdir=""))
 	newDev <- Cairo(width=width, height=height, pointsize=pointsize, bg=bg, units=units, dpi=dpi, type="raster", ...)
-	class(newDev) <- c(class(newDev), "SensePNG")
+	class(newDev) <- c("SensePNG", class(newDev))
   attr(newDev, "units") <- units
   attr(newDev, "dpi") <- dpi
   attr(newDev, "sym") <- devSym
