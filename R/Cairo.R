@@ -83,7 +83,7 @@ SenseDeviceChanges <- function() {
       if (newStatuses[[dev]] > 0) {
         output <- function() {
           device <- get(dev, Cairo::SenseDevices)
-          SenseDeviceData(dev)
+          SenseDeviceData(device)
         }
         if (is.null(curStatuses[[dev]])) changes[[dev]] <- output()
         else if (curStatuses[[dev]] != newStatuses[[dev]]) changes[[dev]] <- output()
