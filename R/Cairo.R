@@ -32,17 +32,17 @@ Cairo <- function(width=640, height=480, file="", type="png", pointsize=12, bg="
 	invisible(structure(gdn,class=c("Cairo",paste("Cairo",toupper(ctype),sep='')),type=as.character(ctype),file=file,width=width,height=height))
 }
 
-
 SenseCacheDir <- "."
 
 # The default Sense graphics device. The filename is generated automatically.
-SensePNG <- function(width = 8, height = 6, pointsize = 12, units="in", bg = "white",  dpi=160, ...) {
+SensePNG <- function(width = 8, height = 6, pointsize = 24, units="in", bg = "white",  dpi=160, ...) {
   # Note, for some reason storing Cairo devices in lists or vectors
   # causes them to be represented as integers, meaning we can't ask 
   # for their serial numbers in the future. So we have to use the
   # namespace itself as a mutable storage location.
   devSym <- basename(tempfile(pattern="SensePlot", tmpdir=""))
 	newDev <- Cairo(width=width, height=height, pointsize=pointsize, bg=bg, units=units, dpi=dpi, type="raster", ...)
+	class(newDev) <- c(class(newDev), "SensePNG")
   attr(newDev, "units") <- units
   attr(newDev, "dpi") <- dpi
   attr(newDev, "sym") <- devSym
@@ -104,6 +104,16 @@ Cairo.capabilities <- function() {
 }
 
 ###-------------- supporting functions -----------------
+
+# Create an S3 printing method for SensePNG.
+PLOT_START <- "SENSE_PLOT_START_FCttd"
+PLOT_END <- "SENSE_PLOT_END_FCttd"
+print.SensePNG <- function(x) {
+  data <- list()
+  data[[attr(x, "sym")]] <- Cairo::SenseDeviceData(x)
+  Cairo::CacheSenseDevice(x)
+  cat(paste(PLOT_START, RJSONIO::toJSON(data), PLOT_END, sep=''))
+}
 
 CairoFontMatch <- function(fontpattern="Helvetica",sort=FALSE,verbose=FALSE) {
 	if (typeof(fontpattern) != "character")
