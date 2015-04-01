@@ -21,6 +21,10 @@ Cairo <- function(width=640, height=480, file="", type="png", pointsize=12, bg="
 		stop("connection must be open and writeable")
 	if (length(units)!=1 || ! units %in% c("px","pt","in","cm","mm"))
 		stop("invalid unit (supported are px, pt, in, cm and mm)")
+        ## res is used in bitmap wrappers to set dpi
+        ## the default is NA so we only honor it if it's set to a non-default value
+        res <- list(...)$res
+        if (!is.null(res) && all(!is.na(res))) dpi <- res
 	if (any(dpi=="auto" || dpi=="")) dpi <- 0
 	if (length(dpi)!=1 || !is.numeric(dpi) || dpi<0)
 		stop("invalid dpi specification (must be 'auto' or a positive number)")
@@ -29,56 +33,7 @@ Cairo <- function(width=640, height=480, file="", type="png", pointsize=12, bg="
 	umpl <- as.double(c(-1, 1/72, 1, 1/2.54, 1/25.4)[units==c("px","pt","in","cm","mm")])
 	gdn<-.External("cairo_create_new_device", as.character(ctype), file, width, height, pointsize, bg, canvas, umpl, dpi, ..., PACKAGE="Cairo")
 	par(bg=bg)
-	invisible(structure(gdn,class=c("Cairo",paste("Cairo",toupper(ctype),sep='')),type=as.character(ctype),file=file,width=width,height=height))
-}
-
-
-SenseCacheDir <- "."
-# An exported function that lets us inject Sense's cache directory, so
-# that we can store automatically generated image files there.
-SetSenseCacheDir <- function(NewDir) {SenseCacheDir <<- NewDir}
-
-SenseDevices <- new.env()
-assign('statuses', list(), SenseDevices)
-SenseDeviceChanges <- function() {
-  newStatuses <- list()
-  curStatuses <- get('statuses', Cairo::SenseDevices)
-  changes <- list()
-  for (dev in ls(SenseDevices)) {
-    if (dev != 'statuses') {
-      newStatuses[[dev]] <- Cairo.serial(get(dev, Cairo::SenseDevices))
-      if (newStatuses[[dev]] > 0) {
-        output <- function() {
-          device <- get(dev, Cairo::SenseDevices)
-          list(width=attr(device,"width"),height=attr(device,"height"),units=attr(device,"units"),dpi=attr(device,"dpi"),data=SensePNGToBase64(device))
-        }
-        if (is.null(curStatuses[[dev]])) changes[[dev]] <- output()
-        else if (curStatuses[[dev]] != newStatuses[[dev]]) changes[[dev]] <- output()
-      }
-    }
-  }
-  assign('statuses', newStatuses, Cairo::SenseDevices)
-  changes
-}
-# The default Sense graphics device. The filename is generated automatically.
-SensePNG <- function(width = 1280, height = 960, pointsize = 24, units="px", bg = "white",  dpi=160, ...) {
-  # Note, for some reason storing Cairo devices in lists or vectors
-  # causes them to be represented as integers, meaning we can't ask 
-  # for their serial numbers in the future. So we have to use the
-  # namespace itself as a mutable storage location.
-  devSym <- basename(tempfile(pattern="SensePlot", tmpdir=""))
-	newDev <- Cairo(width=width, height=height, pointsize=pointsize, bg=bg, units=units, dpi=dpi, type="raster", ...)
-  attr(newDev, "units") <- units
-  attr(newDev, "dpi") <- dpi
-  assign(devSym, newDev, SenseDevices)
-	invisible(newDev)
-}
-
-library('png')
-library('caTools')
-SensePNGToBase64 <- function(d) {
-  capture.output(r <- png::writePNG(Cairo.capture(d), raw()))
-  caTools::base64encode(r)
+	invisible(structure(gdn,class=c("Cairo",paste("Cairo",toupper(ctype),sep='')),type=as.character(ctype),file=file))
 }
 
 Cairo.capabilities <- function() {
@@ -128,17 +83,17 @@ CairoX11 <- function(display=Sys.getenv("DISPLAY"), width = 7, height = 7, point
 
 CairoPNG <- function(filename = "Rplot%03d.png", width = 480, height = 480,
 					 pointsize = 12, bg = "white",  res = NA, ...) {
-	Cairo(width, height, type='png', file=filename, pointsize=pointsize, bg=bg, ...)
+	Cairo(width, height, type='png', file=filename, pointsize=pointsize, bg=bg, res=res, ...)
 }
 
 CairoTIFF <- function(filename = "Rplot%03d.tiff", width = 480, height = 480,
 					  pointsize = 12, bg = "white",  res = NA, ...) {
-	Cairo(width, height, type='tiff', file=filename, pointsize=pointsize, bg=bg, ...)
+	Cairo(width, height, type='tiff', file=filename, pointsize=pointsize, bg=bg, res=res, ...)
 }
 
 CairoJPEG <- function(filename = "Rplot%03d.jpeg", width = 480, height = 480,
 					  pointsize = 12, quality = 75, bg = "white", res = NA, ...) {
-	Cairo(width, height, type='jpeg', file=filename, pointsize=pointsize, bg=bg, quality=quality, ...)
+	Cairo(width, height, type='jpeg', file=filename, pointsize=pointsize, bg=bg, quality=quality, res=res, ...)
 }
 
 CairoPDF <- function(file = ifelse(onefile, "Rplots.pdf", "Rplot%03d.pdf"),

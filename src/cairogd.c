@@ -52,6 +52,7 @@ Rboolean Rcairo_new_device_driver(NewDevDesc *dd, const char *type, int conn, co
 								  int bgcolor, int canvas, double umul, double *dpi, SEXP aux)
 {
 	CairoGDDesc *xd;
+	double dpi_exX = 1.0, dpi_exY = 1.0;
 	
 #ifdef JGD_DEBUG
 	Rprintf("Rcairo_new_device_driver(\"%s\", \"%s\", %f, %f, %f)\n",type,file,width,height,initps);
@@ -82,10 +83,16 @@ Rboolean Rcairo_new_device_driver(NewDevDesc *dd, const char *type, int conn, co
 	if (dpi) {
 		xd->dpix = dpi[0];
 		xd->dpiy = dpi[1];
-		if (xd->dpix>0 && xd->dpiy>0) xd->asp = xd->dpix / xd->dpiy;
-	} else {
+		/* FIXME: Pango uses 96dpi - do we care or are we always
+		   going through FT such that 72dpi is correct? */
+		dpi_exX = dpi[0] / 72.0;
+		dpi_exY = dpi[1] / 72.0;
+		if (dpi_exX == 0.0) dpi_exX = 1.0;
+		if (dpi_exY == 0.0) dpi_exY = 1.0;
+		if (xd->dpix > 0.0 && xd->dpiy > 0.0)
+			xd->asp = xd->dpix / xd->dpiy;
+	} else
 		xd->dpix = xd->dpiy = 0.0;
-	}
 
 	/* ---- fill dd ----- */
 
@@ -97,8 +104,12 @@ Rboolean Rcairo_new_device_driver(NewDevDesc *dd, const char *type, int conn, co
 
     /* Nominal Character Sizes in Pixels */
 
-    dd->cra[0] = 0.9 * initps; /* FIXME: we should use font metric for this */
-    dd->cra[1] = 1.2 * initps;
+    dd->cra[0] = 0.9 * initps * dpi_exX; /* FIXME: we should use font metric for this */
+    dd->cra[1] = 1.2 * initps * dpi_exY;
+
+	/* adjust font size according to the DPI scalig.
+	   FIXME: we have no way of supporting non-square pixels? */
+	xd->fontscale = dpi_exX;
 
     /* Character Addressing Offsets */
     /* These are used to plot a single plotting character */
@@ -522,10 +533,8 @@ SEXP Cairo_get_serial(SEXP dev) {
 				return ScalarInteger(xd->cb->serial & 0x7ffffff); /* return 31-bit so it is easier to handle in R */
 		}
 	}
-  // Rf_error("Not a valid Cairo device");
-  // return R_NilValue;
-  // AP: We need to be able to get the serial number for killed devices.
-  return ScalarInteger(-1);
+	Rf_error("Not a valid Cairo device");
+	return R_NilValue;
 }
 
 SEXP Cairo_set_onSave(SEXP dev, SEXP fn) {

@@ -258,7 +258,7 @@ static void Rcairo_setup_font(CairoGDDesc* xd, R_GE_gcontext *gc) {
 
   /* Add 0.5 per devX11.c in R src. We want to match it's png output as close
    * as possible. */
-  cairo_set_font_size (cc, gc->cex * gc->ps + 0.5);
+  cairo_set_font_size (cc, gc->cex * gc->ps * xd->fontscale + 0.5);
 }
 
 static void Rcairo_set_line(CairoGDDesc* xd, R_GE_gcontext *gc) {
@@ -267,7 +267,7 @@ static void Rcairo_set_line(CairoGDDesc* xd, R_GE_gcontext *gc) {
 	R_GE_linejoin ljoin = CAIRO_LINE_JOIN_ROUND;
 	
 	/* Line width: par lwd  */
-	cairo_set_line_width(cc, gc->lwd);
+	cairo_set_line_width(cc, gc->lwd * xd->fontscale); /* use fontscale to match the DPI setting */
 
 	/* Line end: par lend  */
 	switch(gc->lend){
@@ -409,12 +409,15 @@ static void CairoGD_Close(NewDevDesc *dd)
   CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
   if(!xd || !xd->cb) return;
   
+  xd->npages++;
   xd->cb->save_page(xd->cb,xd->npages);
-  if (xd->cb->onSave) {
+  if (xd->cb->onSave && xd->cb->onSave != R_NilValue) {
 	  SEXP devNr = PROTECT(ScalarInteger(ndevNumber(dd) + 1));
-	  SEXP pageNr = PROTECT(ScalarInteger(xd->npages + 1));
+	  SEXP pageNr = PROTECT(ScalarInteger(xd->npages));
 	  eval(lang3(xd->cb->onSave, devNr, pageNr), R_GlobalEnv);
 	  UNPROTECT(2);
+	  R_ReleaseObject(xd->cb->onSave);
+	  xd->cb->onSave = 0;
   }
   xd->cb->destroy_backend(xd->cb);
 

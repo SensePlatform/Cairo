@@ -1,3 +1,0 @@
-PKG_CFLAGS=-O2 -pipe -g
-PKG_CPPFLAGS= -I/usr/include/cairo -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include -I/usr/include/pixman-1 -I/usr/include/freetype2 -I/usr/include/libpng12    -I. -Iinclude
-PKG_LIBS=  -lfreetype -lpng12 -lz -lXrender -lcairo -lXext -lX11   -ljpeg
