@@ -53,7 +53,7 @@ SenseDeviceChanges <- function() {
       if (newStatuses[[dev]] > 0) {
         output <- function() {
           device <- get(dev, Cairo::SenseDevices)
-          list(width=attr(device,"width"),height=attr(device,"height"),units=attr(device,"units"),dpi=attr(device,"dpi"),data=SensePNGToBase64(device))
+          list(width=attr(device,"width"),height=attr(device,"height"),units=attr(device,"units"),dpi=attr(device,"dpi"),res=attr(device,"res"),data=SensePNGToBase64(device))
         }
         if (is.null(curStatuses[[dev]])) changes[[dev]] <- output()
         else if (curStatuses[[dev]] != newStatuses[[dev]]) changes[[dev]] <- output()
@@ -64,13 +64,17 @@ SenseDeviceChanges <- function() {
   changes
 }
 # The default Sense graphics device. The filename is generated automatically.
-SensePNG <- function(width = 6, height = 4, pointsize = 12, units="px", bg = "white",  dpi=320, res=320, ...) {
+SensePNG <- function(width = 20, height = 15, pointsize = 12, units="cm", bg = "white",  dpi=320, res=320, ...) {
   # Note, for some reason storing Cairo devices in lists or vectors
   # causes them to be represented as integers, meaning we can't ask 
   # for their serial numbers in the future. So we have to use the
   # namespace itself as a mutable storage location.
   devSym <- basename(tempfile(pattern="SensePlot", tmpdir=""))
-	newDev <- Cairo(width=width, height=height, pointsize=pointsize, bg=bg, units=units, dpi=dpi, res=res, type="raster", ...)
+  newDev <- Cairo(width=width, height=height, pointsize=pointsize, bg=bg, units=units, dpi=dpi, res=res, type="raster", ...)
+  print("HELLO FROM CAIRO")
+  print(attributes(newDev))
+  # attr(newDev, "width") <- width
+  # attr(newDev, "height") <- height
   attr(newDev, "units") <- units
   attr(newDev, "dpi") <- dpi
   attr(newDev, "res") <- res
