@@ -1,6 +1,8 @@
 ### Copyright (C) 2004-2007 Simon Urbanek
 ### License: GPL v2
 
+### Modified by Cloudera Inc., 1 Apr 2015
+
 ### mapping of supported type names to canonical type names
 ### as of 1.3-2 png/png24/png32 are the same (we don't support png8 anyway)
 .supported.types <- c(png="png",png24="png",png32="png",jpeg="jpeg",jpg="jpeg",tiff="tiff",tif="tiff",

@@ -1,3 +1,4 @@
+# Modified by Cloudera Inc., 3 Sep 2013
 exportPattern("^Cairo")
 export(SensePNG)
 # export(SenseSVG)
