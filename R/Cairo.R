@@ -37,6 +37,54 @@ Cairo <- function(width=640, height=480, file="", type="png", pointsize=12, bg="
 	invisible(structure(gdn,class=c("Cairo",paste("Cairo",toupper(ctype),sep='')),type=as.character(ctype),file=file))
 }
 
+SenseCacheDir <- "."
+# An exported function that lets us inject Sense's cache directory, so
+# that we can store automatically generated image files there.
+SetSenseCacheDir <- function(NewDir) {SenseCacheDir <<- NewDir}
+
+SenseDevices <- new.env()
+assign('statuses', list(), SenseDevices)
+SenseDeviceChanges <- function() {
+  newStatuses <- list()
+  curStatuses <- get('statuses', Cairo::SenseDevices)
+  changes <- list()
+  for (dev in ls(SenseDevices)) {
+    if (dev != 'statuses') {
+      newStatuses[[dev]] <- Cairo.serial(get(dev, Cairo::SenseDevices))
+      if (newStatuses[[dev]] > 0) {
+        output <- function() {
+          device <- get(dev, Cairo::SenseDevices)
+          list(width=attr(device,"width"),height=attr(device,"height"),units=attr(device,"units"),dpi=attr(device,"dpi"),data=SensePNGToBase64(device))
+        }
+        if (is.null(curStatuses[[dev]])) changes[[dev]] <- output()
+        else if (curStatuses[[dev]] != newStatuses[[dev]]) changes[[dev]] <- output()
+      }
+    }
+  }
+  assign('statuses', newStatuses, Cairo::SenseDevices)
+  changes
+}
+# The default Sense graphics device. The filename is generated automatically.
+SensePNG <- function(width = 1280, height = 960, pointsize = 24, units="px", bg = "white",  dpi=160, ...) {
+  # Note, for some reason storing Cairo devices in lists or vectors
+  # causes them to be represented as integers, meaning we can't ask 
+  # for their serial numbers in the future. So we have to use the
+  # namespace itself as a mutable storage location.
+  devSym <- basename(tempfile(pattern="SensePlot", tmpdir=""))
+	newDev <- Cairo(width=width, height=height, pointsize=pointsize, bg=bg, units=units, dpi=dpi, type="raster", ...)
+  attr(newDev, "units") <- units
+  attr(newDev, "dpi") <- dpi
+  assign(devSym, newDev, SenseDevices)
+	invisible(newDev)
+}
+
+library('png')
+library('caTools')
+SensePNGToBase64 <- function(d) {
+  capture.output(r <- png::writePNG(Cairo.capture(d), raw()))
+  caTools::base64encode(r)
+}
+
 Cairo.capabilities <- function() {
     ust <- unique(.supported.types)
     cap <- !is.na(match(ust, .Call("Rcairo_supported_types", PACKAGE="Cairo")))
